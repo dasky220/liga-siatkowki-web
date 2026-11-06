@@ -1,56 +1,43 @@
-# 🏐 Liga Siatkówki — strona WWW
+# 🏐 Just Volleyball Polska — strona ligi
 
-Strona Next.js łącząca się z botem Discord przez REST API (`bot_api.py`).
-Wyświetla tabele ligowe, terminarze, drużyny i wyniki wszystkich serwerów
-obsługiwanych przez bota — każda gildia = osobna liga.
+Strona Next.js połączona z botem Discord. Pokazuje dane z jednej ligi
+(Just Volleyball Polska — gildia Discord ID `1567132715550249020`).
 
-Pełna instrukcja konfiguracji w pliku `../DEPLOYMENT.md`.
+## Strony
 
-## Szybki start (lokalnie)
+| URL | Co tam jest |
+|---|---|
+| `/` | Strona główna — banner, statystyki, tabela, podium, terminarz, wyniki, drużyny |
+| `/druzyny` | Lista wszystkich drużyn z kartami |
+| `/druzyny/[id]` | Karta jednej drużyny — statystyki, ostatnie i nadchodzące mecze |
+| `/terminarz` | Wszystkie nadchodzące mecze, pogrupowane po dniach |
+| `/wyniki` | Wszystkie zakończone mecze, pogrupowane po dniach |
 
-```bash
-cp .env.example .env.local
-# Uzupełnij NEXT_PUBLIC_API_URL i NEXT_PUBLIC_API_TOKEN w .env.local
-npm install
-npm run dev
-```
+## Zmienne środowiskowe (Vercel)
 
-Strona: http://localhost:3000
+| Name | Value |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | `http://fi14.bot-hosting.cloud:26226` |
+| `NEXT_PUBLIC_API_TOKEN` | Twój token API |
+| `NEXT_PUBLIC_GUILD_ID` | `1567132715550249020` (Just Volleyball Polska) |
 
-## Struktura
+## Jak zmienić ligę?
 
-```
-website/
-├── app/
-│   ├── layout.tsx          # Główny layout (header, footer)
-│   ├── page.tsx            # Homepage: lista lig (gildii)
-│   ├── globals.css         # Style Tailwind + globalne
-│   └── league/[guildId]/
-│       ├── page.tsx        # Strona ligi: tabela + terminarz + drużyny + wyniki
-│       └── team/[teamId]/
-│           └── page.tsx    # Karta drużyny: ostatnie + nadchodzące mecze
-├── lib/
-│   └── api.ts              # Klient API (fetch + typy + helpery)
-├── next.config.js
-├── tailwind.config.js      # Paleta ciemna + akcent pomarańczowy
-├── tsconfig.json
-└── package.json
-```
+Jeśli kiedykolwiek będziesz chciał zmienić ligę na inny serwer Discord:
 
-## Architektura
+1. Wpisz `/lista_serwerow` na Discordzie (jako właściciel bota)
+2. Skopiuj ID innej gildii
+3. W Vercel: Settings → Environment Variables → zmień `NEXT_PUBLIC_GUILD_ID`
+4. Redeploy
 
-```
-Discord Bot (bot.py)  ←─  SQLite per gildia  ─→  bot_api.py (REST API)
-                                                          ↑
-                                                  Cloudflare Tunnel (darmowy)
-                                                          ↑
-                                                  Vercel (Next.js strona)
-                                                          ↑
-                                                       Użytkownik
-```
+## Zmiana domeny
 
-- Bot pisze do SQLite zwykłymi transakcjami.
-- `bot_api.py` czyta bazy w trybie **read-only** (`?mode=ro&immutable=1`), więc
-  NIE blokuje bota.
-- Next.js korzysta z ISR (odświeżanie co 30 s), więc na Vercelu nie ma dodatkowych opłat.
-- Strona jest publiczna (token API jest read-only, można go ujawnić w przeglądarce).
+Patrz sekcja "Jak podpiąć własną domenę" w `DEPLOYMENT.md`.
+
+## Zmiana logo / bannera
+
+Pliki w folderze `public/`:
+- `logo.jpg` — logo małe (nagłówek, hero, footer) — 400×400, max ~50 KB
+- `hero.jpg` — duży banner tła hero — 1600×1600, max ~200 KB
+
+Po podmianie pliku: `git push` → Vercel auto-redeploy.

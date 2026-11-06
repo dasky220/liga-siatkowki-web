@@ -1,18 +1,23 @@
 /**
  * Klient API — proste wrapper'y fetch na endpointy bot_api.py.
  *
- * Wszystkie wywołania idą przez zmienną NEXT_PUBLIC_API_URL (publiczny URL API bota,
- * np. https://liga-twoj-bot.trycloudflare.com). Token autoryzacji jest READ-ONLY
- * i może być publiczny — udostępnia jedynie dane ligowe.
+ * Strona jest przypisana do JEDNEJ gildii (Just Volleyball Polska).
+ * ID gildii można zmienić przez NEXT_PUBLIC_GUILD_ID w .env, ale domyślnie
+ * używamy gildii just volleyball Polska.
  */
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 export const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || '';
 
+/** Gildia, którą strona wyświetla (hardcoded do Just Volleyball Polska). */
+export const GUILD_ID =
+  process.env.NEXT_PUBLIC_GUILD_ID || '1567132715550249020';
+
+/** Discord invite — przycisk w nagłówku. */
+export const DISCORD_INVITE = 'https://discord.gg/32bwcEWCT2';
+
 if (!API_URL) {
-  console.warn(
-    '⚠️  NEXT_PUBLIC_API_URL nie jest ustawione. Strona nie połączy się z botem.'
-  );
+  console.warn('⚠️  NEXT_PUBLIC_API_URL nie jest ustawione.');
 }
 
 async function apiGet<T>(path: string, revalidate: number = 30): Promise<T> {
@@ -25,7 +30,7 @@ async function apiGet<T>(path: string, revalidate: number = 30): Promise<T> {
 
   const res = await fetch(url, {
     headers,
-    next: { revalidate }, // ISR: odświeża stronę co N sekund
+    next: { revalidate },
   });
 
   if (!res.ok) {
@@ -36,14 +41,6 @@ async function apiGet<T>(path: string, revalidate: number = 30): Promise<T> {
 }
 
 // --- Typy --------------------------------------------------------------------
-
-export interface GuildMeta {
-  id: string;
-  name: string;
-  icon_url: string | null;
-  teams_count?: number;
-  active_season?: string;
-}
 
 export interface Season {
   id: number;
@@ -92,38 +89,37 @@ export interface Match {
 
 // --- Funkcje -----------------------------------------------------------------
 
-export const fetchGuilds = () => apiGet<{ guilds: GuildMeta[] }>('/api/guilds', 60);
+export const fetchGuildMeta = (gid: string = GUILD_ID) =>
+  apiGet<{
+    name: string;
+    icon_url: string | null;
+    active_season: Season | null;
+    seasons: Season[];
+  }>(`/api/${gid}/meta`, 60);
 
-export const fetchGuildMeta = (gid: string) =>
-  apiGet<GuildMeta & { active_season: Season | null; seasons: Season[] }>(
-    `/api/${gid}/meta`,
-    60
-  );
-
-export const fetchStandings = (gid: string, seasonId?: number) =>
+export const fetchStandings = (gid: string = GUILD_ID, seasonId?: number) =>
   apiGet<{ standings: StandingRow[]; season_id: number }>(
     `/api/${gid}/standings${seasonId ? `/${seasonId}` : ''}`,
     30
   );
 
-export const fetchTeams = (gid: string) =>
+export const fetchTeams = (gid: string = GUILD_ID) =>
   apiGet<{ teams: Team[] }>(`/api/${gid}/teams`, 60);
 
-export const fetchTeam = (gid: string, teamId: number) =>
+export const fetchTeam = (gid: string = GUILD_ID, teamId: number) =>
   apiGet<{ team: Team & { recent_matches: Match[]; upcoming_matches: Match[] } }>(
     `/api/${gid}/teams/${teamId}`,
     30
   );
 
-export const fetchSchedule = (gid: string, limit = 30) =>
+export const fetchSchedule = (gid: string = GUILD_ID, limit = 30) =>
   apiGet<{ matches: Match[] }>(`/api/${gid}/schedule?limit=${limit}`, 30);
 
-export const fetchResults = (gid: string, limit = 50) =>
+export const fetchResults = (gid: string = GUILD_ID, limit = 50) =>
   apiGet<{ matches: Match[] }>(`/api/${gid}/results?limit=${limit}`, 30);
 
 // --- Pomocnicze --------------------------------------------------------------
 
-/** Rozdziela "🏐 OGNIWO Warszawa" -> { emoji, name } */
 export function splitTeamDisplay(name: string): { emoji: string | null; name: string } {
   const m = name.match(/^(\S+)\s+(.+)$/);
   if (m && /\p{Extended_Pictographic}/u.test(m[1])) {
@@ -132,7 +128,6 @@ export function splitTeamDisplay(name: string): { emoji: string | null; name: st
   return { emoji: null, name };
 }
 
-/** Formatuje datę w formacie polskim */
 export function formatDate(iso: string | null): string {
   if (!iso) return '—';
   try {
@@ -159,6 +154,29 @@ export function formatDateShort(iso: string | null): string {
       hour: '2-digit',
       minute: '2-digit',
     });
+  } catch {
+    return iso;
+  }
+}
+
+export function formatDayMonth(iso: string | null): string {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('pl-PL', {
+      day: '2-digit',
+      month: 'long',
+    });
+  } catch {
+    return iso;
+  }
+}
+
+export function formatTime(iso: string | null): string {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('pl-PL', { hour: '2-digit', minute: '2-digit' });
   } catch {
     return iso;
   }
