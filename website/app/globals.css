@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: radial-gradient(ellipse at top, #131825 0%, #070a12 60%);
+  color: #e6e9f2;
+  min-height: 100vh;
+}
+
+body {
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+/* Subtelna siatka tła jak w panelach sportowych */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 64px 64px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pasek przewijania */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0c1018; }
+::-webkit-scrollbar-thumb { background: #2a3145; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #3a4258; }
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-ink-700/80 bg-ink-800/60 backdrop-blur shadow-card;
+  }
+  .card-hover {
+    @apply transition-all duration-200 hover:border-flame-500/50 hover:shadow-glow;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-xl bg-flame-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-flame-600 active:scale-95;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .stat-num {
+    @apply font-display text-2xl font-bold tracking-tight;
+  }
+  .label-muted {
+    @apply text-xs uppercase tracking-wider text-slate-400;
+  }
+  .divider {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-ink-600 to-transparent;
+  }
+}
